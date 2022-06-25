@@ -1,0 +1,66 @@
+---
+title: "Untitled"
+author: "Théo Boulakia"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+# Packages-------
+
+library(readxl)
+
+library(tidyverse)
+
+library(questionr)
+
+library(FactoMineR)
+
+library(GDAtools)
+
+library(knitr)
+
+# Import & Recodages-----
+
+d <- read_excel("data/pop_enq.xlsx") %>%
+  
+  mutate(pcs_pere = fct_recode(csp_pere,
+                               "Agriculteur" = "1",
+                               "Artisan" = "2",
+                               "Cadre" = "3",
+                               "Profession intermédiaire" = "4",
+                               "Employé" = "5",
+                               "Ouvrier" = "6",
+                               "Autre personne sans activité" = "8",
+                               NULL = "NA"),
+         pcs_mere = fct_recode(csp_agr_mere,
+                               "Artisane" = "2",
+                               "Cadre" = "3",
+                               "Profession intermédiaire" = "4",
+                               "Employée" = "5",
+                               "Ouvrière" = "6",
+                               "Autre personne sans activité" = "8",
+                               NULL = "NA"),
+         parent_cadre = if_else(csp_pere == "3" | csp_agr_mere == "3",
+                                "Au moins un parent cadre",
+                                "Aucun parent cadre"))
+
+
+```
+
+```{r}
+
+table(d$classes_prepa) %>%
+  
+  kable(caption = "Anciens de classe prépa")
+
+```
+

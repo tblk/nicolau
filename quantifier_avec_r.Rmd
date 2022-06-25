@@ -1,0 +1,380 @@
+---
+title: "Validation - Construire et traiter des données avec R"
+author: "Nicolau Pessanha"
+date: "Mai 2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Le profil sociologique des « masterants » de sociologie de l’EHESS : un recrutement social et scolaire clivé  
+
+**À la rentrée universitaire 2020, 47 étudiants se sont inscrits en première année de master Sociologie à l'EHESS. Au 1er décembre 2021, neuf étudiants sur dix (39/44) sont encore en études, 2 ont abandonné et 3 sont actuellement en césure. 
+Les étudiants de la mention sont le plus souvent des étudiantes. Elles représentent 65,9 % de notre échantillon (29/44). 
+C'est une autre spécificité bien connue de la discipline, la sociologie accueille des étudiants plus âgés que ceux des autres disciplines (Chenu, 2002). Au sein de la mention, ils ont en moyenne 25,1 ans et 6,8 % d'entre eux déclarent être âgés de plus de 30 ans.
+La plupart de ces étudiants ont obtenu un baccalauréat général (93,2%), 46,1% dans la série ES, 30,1% dans la série S et 23,1% dans la série L. En revanche, 4,5% seulement ont un baccalauréat professionnel ; la part des bacheliers technologiques est extrêmement faible (2,3%). 
+la formation présente un recrutement plutôt "élitiste", 40 % des étudiant.e.s ont un père cadre, mais seulement 7 % ont un père qui est ouvrier
+La mention se caractérise par un recrutement clivé. Trois groupes relativement homogènes se dessinent. Un premier groupe, les filles de cadres à l'heure scolairement ; Un deuxième groupe, les enfants d'ouvriers et de professions intermédiaires en retard scolairement ; Un troisième groupe, des étudiants au masculin, en reprise d'études, dont le père est cadre ou employé. 
+En définitive, si le recrutement social et scolaire de la mention est sans doute plus "élitiste" que celui observé par Florian Bertrand à partir des données de l'enquête Génération (2010) réalisée par le CEREQ, il reste caractéristique du recrutement présenté par les filières en SHS. En ce que plus âgé et plus féminin que celui des autres "grandes écoles" (Rapport IPP, 2021).**
+
+
+## Introduction 
+
+**Jacques Le Goff** : *vous n’avez pas idée de ce qu’étaient les étudiants en Hautes Études à cette époque-là... ce n’étaient pas des étudiants. C’étaient des gens, dont tous n’étaient pas très jeunes, qui venaient participer à des séminaires. Mais la partie d’eux-mêmes qui était étudiants, c’était dans des universités qu’ils étaient étudiants.*
+
+**André Burguière** : *aux Hautes Études que j’ai connues, c’était de petits séminaires un peu squelettiques où il y avait quelques collègues, Goubert… Il n’y avait quasiment personne ou il y avait quelques clochards… C’était une institution marginale (…) on était une dizaine en gros, ce qui était bien, ce qui était parfait, mais...* 
+
+**Qui sont les nouveaux étudiants de l'EHESS ?**
+
+La représentation de l'"étudiant" de l'EHESS comme figure marginale au sein d'un établissement marginal a la peau dure. Elle est l'héritière d'une certaine histoire institutionnelle. Depuis, l'EHESS accueille et forme de nouveaux publics étudiants. Cette ouverture à un public plus large s'est faite en deux moments. D'abord en 1975, la VI° Section de l’EPHE devient l'EHESS et devient doctorale. Ensuite en 2005, avec la création des masters, calquée sur le nouveau schéma de formation LMD. Au vu de ces évolutions, on est en droit de se demander : à quoi ressemble le nouvel étudiant de l'EHESS ? 
+Ce travail aura donc pour objectif d'établir le profil sociologique de l'étudiant-masterant de l'EHESS. Plus précisément, d'éclairer la composition sociale et scolaire des étudiants du master de sociologie de l'EHESS. 
+
+**Le recrutement social et scolaire de la mention sociologie de L'EHESS : des tendances contraires ?**
+
+Le rôle central de l'EHESS dans la production des élites scientifiques en SHS est indubitable. L'EHESS est un grand établissement scientifique tourné vers la recherche et la production de doctorats. Le doctorat qu'elle offre est depuis longtemps considéré l'un des maillons de la "voie royale" en SHS. Or si l'on connait le prestige associé à la réalisation d'un doctorat à l'EHESS, quid de celui des nouvelles formations masterantes ? 
+En objectivant la structure sociale de son recrutement, en la comparant avec celle des autres formations masterantes, nous espérons obtenir des indications sur la place occupée par le master de sociologie de l'EHESS au sein de l'espace des formations masterantes en sociologie. 
+Mais si le profil social de l'étudiant varie au regard des types d'établissements, il varie également en fonction de la discipline étudiée. En effet, "l'espace des disciplines constitue un espace hiérarchisé au sein duquel hiérarchie sociale et hiérarchie scolaire des disciplines sont très fortement corrélées" (Convert, 2003). Or, le recrutement social et scolaire des filières en SHS est connu pour être plus féminin, plus jeune et moins "bourgeois" que celui des autres disciplines (Chenu, 2002). On est alors en droit de se poser les questions suivantes : 
+Dans quelle mesure, les étudiants de cette mention présentent-ils certains signes extérieurs de la réussite scolaire ?  Les étudiants de notre base de données sont-ils plus sélectionnés (socialement et scolairement) que ceux de l'enquête du CEREQ 2010 ?
+
+Dans un premier moment, nous comparerons, au moyen de tris simples et de tris croisés, les résultats que nous obtenons sur notre échantillon avec ceux obtenus par Florian Bertrand sur le sien. Nous aurons ensuite recours à l'analyse géométrique de données  (l'ACM et le CAH) afin de délimiter des groupes étudiants cohérents au sein de notre cohorte. 
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE }
+
+# Packages-------
+
+library(readxl)
+
+library(tidyverse)
+
+library(questionr)
+
+library(FactoMineR)
+
+library(GDAtools)
+
+library(knitr)
+
+# Import & Recodages-----
+
+d <- read_excel("data/pop_enq.xlsx")
+
+# Création de la variable "bac"
+d$bac <- d$filiere_bac %>%
+  fct_recode(
+    "Bac général" = "Autre",
+    "Bac général" = "ES",
+    "Bac général" = "L",
+    "Bac professionnel" = "Professionnel",
+    "Bac général" = "S",
+    "Bac technologique" = "STI2D"
+  )
+
+# Création de la variable "serie_bac"-----
+d$serie_bac <- d$filiere_bac %>%
+  fct_recode(
+    NULL = "STI2D",
+    NULL = "Professionnel",
+    NULL = "Autre"
+  )
+
+## Création de la variable en_retard------
+d$en_retard <- d$age_cat %>%
+  fct_recode(
+    "À l'heure" = "21-23",
+    "En retard" = "24-29",
+    "En retard" = "30 et plus"
+  )
+
+## Création de la variable heures_travail------ 
+d %>%
+  mutate(travail = if_else(heures_travail > 10, "travail", "pas travail"))
+
+## Création de la variable en_retard------
+d %>%
+  mutate(en_retard = if_else(age > 24, "En retard", "À l'heure"))
+
+## Recodage des variables csp_pere/csp_mere et création de la variable parent_cadre------
+
+d$pcs_pere <- d$csp_pere %>%
+  fct_recode(
+    "Agriculteur" = "1",
+    "ACCE" = "2",
+    "Cadre" = "3",
+    "Prof inter" = "4",
+    "Employé" = "5",
+    "Ouvrier" = "6",
+    "Autre personne sans activité" = "8",
+    "NULL" = "NA"
+  )
+
+d$pcs_mere <- d$csp_mere %>%
+  as.character() %>%
+  fct_recode(
+    "ACCE" = "2",
+    "Cadre" = "3",
+    "Prof inter" = "4",
+    "Employée" = "5",
+    "Ouvrière" = "6",
+    "Autre personne sans activité" = "8"
+  ) %>%
+  fct_explicit_na("NULL")
+
+```
+
+```{r recodages}
+
+d <- read_excel("data/pop_enq.xlsx") %>%
+  
+  mutate(pcs_pere = fct_recode(csp_pere,
+                               "Agriculteur" = "1",
+                               "ACCE" = "2",
+                               "Cadre" = "3",
+                               "Prof int" = "4",
+                               "Employé" = "5",
+                               "Ouvrier" = "6",
+                               "Autre personne sans activité" = "8",
+                               NULL = "NA"),
+         pcs_mere = fct_recode(csp_agr_mere,
+                               "ACCE" = "2",
+                               "Cadre" = "3",
+                               "Prof int" = "4",
+                               "Employée" = "5",
+                               "Ouvrière" = "6",
+                               "Autre personne sans activité" = "8",
+                               NULL = "NA"),
+         parent_cadre = if_else(csp_pere == "3" | csp_agr_mere == "3",
+                                "Au moins un parent cadre",
+                                "Aucun parent cadre"),
+         filiere_bac = fct_recode(filiere_bac,
+                                  "Bac général" = "Autre",
+                                  "Bac général" = "ES",
+                                  "Bac général" = "L",
+                                  "Bac professionnel" = "Professionnel",
+                                  "Bac général" = "S",
+                                  "Bac technologique" = "STI2D"),
+         serie_bac  = fct_recode(filiere_bac,
+                                 NULL = "STI2D",
+                                 NULL = "Professionnel",
+                                 NULL = "Autre"
+         ))
+
+
+```
+
+## Analyse
+
+### Exemples de tris simples 
+
+Du point de vue du sexratio, nous savons que les formations en SHS sont très fortement féminisées. Nos résultats vont dans le sens d'une surreprésentation des étudiantes puisqu'elles représentent 65,9 % de notre échantillon (29/44). 
+
+```{r}
+
+# Calcul du sex ratio------
+
+freq(d$sexe, cum=T, digits=2, total=T, exclude=NA)
+
+```
+C'est une spécificité bien connue de la discipline, la sociologie accueille des étudiants plus âgés que ceux des autres disciplines (Chenu, 2002). Au sein de l'échantillon du CEREQ, 23,5 % déclarent avoir été âgés de 30 ans ou plus au moment d’obtenir leur diplôme, ils ne sont que 6,8% au sein de notre échantillon, et la moyenne d’âge au moment de la certification est de 27,8 ans contre 25,1 ans au sein de notre échantillon.  Les masterants de la mention sociologie sont donc en moyenne plus jeune que ceux de l'échantillon du CEREQ. 
+
+```{r}
+# Moyenne d'âge, âge de l'étudiant le plus âgé et âge de l'étudiant le plus jeune-----
+
+summary(d$age)
+
+# Proportion d'étudiants dans les différentes catégories d'âge ------
+
+freq(d$age_cat, cum=T, digits=2, total=T, exclude=NA)
+
+```
+
+La plupart des étudiants-masterants de la formation ont obtenu un baccalauréat général (93,2% contre 91% au sein de l'échantillon du CEREQ), 46,1% dans la série ES (contre 37,6 %), 30,1% dans la série S (contre 27,5 %) et 23,1% (34,8 %) dans la série L. En revanche, 4,5% seulement ont un baccalauréat professionnel ; la part des bacheliers technologiques est extrêmement faible (2,3%). 
+
+
+```{r}
+
+# Proportion de bac généraux-----
+
+freq(d$bac, cum=T, digits=2, total=T, exclude=NA)
+
+# Distribution statistique des différentes séries bac------
+
+freq(d$serie_bac, cum=T, digits=2, total=T, exclude=NA)
+
+# Proportion d'étudiants "en retard" scolairement-----
+
+freq(d$en_retard, cum=T, digits=2, total=T, exclude=NA)
+
+# Proportion d'étudiants étant passés par une classe préparatoire-----
+
+freq(d$classes_prepa, cum=T, digits=2, total=T, exclude=NA)
+
+```
+Au sein de la formation, 40 % des étudiant.e.s ont un père cadre (contre 31 % au sein de l'échantillon du CEREQ) et 7 % ont un père qui est ouvrier (contre 23%). 
+Romuald Bodin et Sophie Orange ont raison de nous rappeler que l'on présuppose, souvent à tort, que l'existence d'une sélection à l'entrée d'une filière assurerait de fait la "qualité" du recrutement estudiantin de l'institution en question. Le contraire semble également vrai. Si "la sélection ne constitue pas une barrière magique qui place de fait les filières concernées du côté de l'élite et garantit l'excellence de leurs publics", l'absence (relative puisque 3 étudiants sur 5 se sont quand même vus refuser leur entrée dans la formation en 2020) de sélection, notamment l'existence d'un concours à l'entrée des formations masterantes, n'empêche pas le recrutement social plutôt "élitiste" de la formation étudiée à l'EHESS. Le résultat de la sélection est intrinsèquement dépendant de la position occupée par la filière dans une hiérarchie fondée sur le prestige : c'est la place dans la hiérarchie symbolique des filières et des établissements qui définit la nature des publics et non le caractère sélectif ou non d'une formation (Bodin et Orange, 2013). Et si l'on n'observe pas des écarts supérieurs, c'est sans doute parce que du point de vue de la composition socioscolaire, les établissements tendent à se rapprocher au niveau master (Blanchard, Chauvel et Harari-Kermadec, 2020). 
+
+```{r}
+
+# Proportion d'étudiants ayant un père cadre, un père ouvrier... 
+
+freq(d$pcs_pere, cum=T, digits=2, total=T, exclude=NA)
+
+```
+
+Dans cette étude, l’"excellence scolaire" des étudiant.e.s est décrite par l’intermédiaire de quatre indicateurs : le fait d’avoir obtenu un bac, la série du bac, le passage ou non par une classe préparatoire, et le fait d’être à l’heure scolairement. Si l'on se fie à ces indicateurs, le recrutement scolaire du master de sociologie de l'EHESS est plus "exigeant" (plus de bac général, plus de bac S, des étudiants plus jeunes, etc.) que celui des formations masterantes comprises dans l'échantillon du CEREQ.  
+
+### Exemples de tris croisés 
+
+Les élèves sous-sélectionnés socialement sont-ils sursélectionnés scolairement à l'EHESS ? Au sein de la mention sociologie de l'EHESS, les étudiants originaires de milieux populaires sont plus fréquemment « en retard » que les autres. En effet, alors qu’ils sont plus de la moitié à être à l’heure lorsqu’ils déclarent avoir un père-cadre (10/17), aucun étudiant ayant déclaré avoir un père ouvrier n’est à l’heure scolairement (0/3).  On observe donc une surreprésentation des enfants d’ouvriers parmi les étudiants « en retard ».  
+
+```{r}
+
+table(d$pcs_pere, d$en_retard, useNA = "ifany")
+tab <- table(d$pcs_pere, d$en_retard, useNA = "ifany")
+lprop(tab)
+
+```
+
+Au sein de la mention sociologie de l'EHESS, la "qualité" du profil scolaire moyen tient, pour partie de la "qualité" du profil scolaire des étudiantes. 
+
+```{r}
+# Sexe et âge----
+
+ggplot(d, aes(x = sexe, y = age, color = sexe), alpha = 0.7) +
+  
+  geom_boxplot(varwidth = TRUE) +
+  
+  geom_jitter() +
+  
+  ggtitle("Les étudiantes plus souvent à l'heure scolaire") +
+  
+  theme_minimal()
+```
+
+À l’EHESS, ce sont les étudiants d’origine aisée qui arrivent le plus souvent à la mention sociologie avec des origines « universitaires » (hors sociologie) différentes de la discipline d'accueil. La sociologie semble toujours faire office de "discipline refuge" pour ces publics (Convert, 2003). 
+
+```{r}
+table(d$pcs_pere, d$etudes_socio, useNA = "ifany")
+tab <- table(d$pcs_pere, d$etudes_socio, useNA = "ifany")
+lprop(tab)
+
+```
+
+### ACM
+
+Combien d'axes conserver ? La lecture de l'histogramme des valeurs propres semble nous indiquer un saut entre la deuxième et la troisième valeur. Le degré d'inertie expliqué par les deux axes, le pourcentage total d'information résumé par les deux axes est d'environ 26%. Le premier axe explique 14,17% de l'inertie du jeu de données et le second 12,08%. C'est très satisfaisant. Cela s'explique par le fait que plusieurs variables de notre jeu de données sont corrélées entre elles. Notamment la catégorie socioprofessionnelle du père et la catégorie socioprofessionnelle de la mère. Ces variables ne sont pas pour autant artificiellement corrélées. Dans la suite de l'analyse, on se concentrera donc sur la première et la deuxième dimension.
+Quelles sont les variables et les différentes modalités qui contribuent le plus aux différents axes de mon ACM ?  
+Pour pouvoir mieux estimer la contribution des modalités aux différents axes, nous calculons la  valeur "seuil" qui correspond à la contribution moyenne de l'ensemble des modalités. Dans notre cas, cette valeur équivaut à 4.54. Toute participation supérieure à cette valeur mérite d'être commentée. Le premier axe est défini par des modalités qui se rapportent à l'âge et à la catégorie socioprofessionnelle des parents. En l'occurrence, le fait d'avoir plus de trente ans et le fait d'avoir une mère ou un père employé. Le deuxième axe par le fait d'avoir entre 21 et 24 ans et le fait d'avoir une mère cadre. Étant donné la structure genrée de l'espace des occupations, le fait d'avoir une mère-cadre est plus discriminant que d'avoir un père-cadre. Cela explique le caractère plus distinctif de la modalité. Le premier axe oppose donc des étudiants qui ont trente ans et plus et qui ont un père ou une mère employée à des étudiants qui ont entre 24 et 29 ans et une mère profession intermédiaire. 
+Le deuxième axe oppose des étudiants à l'heure scolairement, qui ont fait un bac S et dont leurs parents sont cadres à des étudiants en retard scolairement, qui ont fait un autre type de bac et qui ont des parents ouvriers ou artisans. 
+L'ACM semble dégager trois groupes étudiants, correspondants chacun d'entre eux à des recrutements sociaux et scolaires relativement homogènes. Si elle permet de montrer comment s'organise l'espace des étudiants, l'ACM ne nous permet pas d'attribuer de manière rigoureuse un groupe à chaque étudiant. Pour cela nous allons utiliser un outil dédié à l'identification de groupes (CAH). 
+
+
+```{r}
+# ACM--------
+
+## Réalisation-----
+
+d_acm = d %>%
+  
+  drop_na() %>% # on perd 6 individus, ça va encore
+  
+  select(tuteur_hdr, sexe, age_cat, classes_prepa, travail, pcs_pere, pcs_mere,
+         filiere_bac) %>%
+  
+  mutate(tuteur_hdr = as_factor(tuteur_hdr))
+
+res_acm = MCA(d_acm, quali.sup = 1, level.ventil = 0.03, graph = FALSE)
+
+## Valeurs propres---------
+
+# Combien d'axes conserver ?
+
+barplot(res_acm$eig[,2], main="Histogramme des valeurs propres", 
+        xlab="Axes", ylab="Pourcentage d'inertie", cex.axis=0.8, font.lab=3,
+        col="orange")
+
+# Le saut est après le 2e on dirait...
+
+res_acm$var$contrib
+
+## Nuage des modalités les plus contributives-----
+
+seuil <- 100/nrow(res_acm$var$contrib) # contribution supérieures à la contribution moyenne---
+
+moda <- which(res_acm$var$contrib[, 1]>seuil # on crée un vecteur contenant les modalités dont la participation est supérieur à la moyenne---
+              | res_acm$var$contrib[, 2]>seuil)
+
+plot.MCA(res_acm, invisible=c("ind","quali.sup"), 
+         title="Nuage des modalites actives Plan 1-2", axes=c(1,2),
+         selectMod=c(moda), cex=0.8)
+
+## Nuage des individus---------
+
+plot(res_acm, choix=c("ind"), invisible=c("var", "quali.sup"), cex=0.7, axes=c(1,2))
+
+```
+
+### CAH 
+
+L'étude du nuage des individus va nous permettre de décider combien de groupes l'on souhaite obtenir à travers la CAH. Les points situés à la toute droite du nuage de points semblent former un groupe relativement cohérent. Ceux au centre se répartissent entre un premier groupe d'enfants de cadres et un deuxième d'enfants d'ouvriers et de professions intermédiaires. On demande donc à la CAH de nous construire trois groupes. Comme pour l'ACM, il est important de vérifier la contribution des modalités aux différents clusters, mais également de vérifier la fiabilité de cette participation (p-value inférieure à 0,05). 
+À quoi ressemblent les clusters dessinés par la CAH ? Un premier groupe est composé de filles de cadres à l'heure scolairement ; un deuxième groupe, d'enfants d'ouvriers et de professions intermédiaires en retard scolairement ; un troisième groupe, d'étudiants au masculin, en reprise d'études, dont le père est cadre ou employé. On observe au niveau de la mention étudiée le dualisme de recrutement scolaire que Stéphane Beaud note à l’échelle de la profession. Une fraction des étudiant.e.s, parée des signes extérieurs de l'excellence scolaire (à l'heure scolairement, munie d'un bac S et passée par les classes préparatoires), s'oppose à une autre qui a réalisé son cursus à l'université et est en retard scolairement. La représentation selon laquelle les différents cycles de sociologie constituent une filière est une illusion. Le penser, c'est ne pas tenir compte du nombre d'abandons, de réorientations et de conversions tardives propres à la sociologie (Beaud, 2012). 
+
+```{r}
+# CAH-------
+
+## Réalisation------
+
+res_cah <- HCPC(res_acm, nb.clust = 3, graph = FALSE)
+
+## Visualisation des résultats---------
+
+plot(res_cah, choice = "tree")
+
+plot(res_cah, choice = "map", draw.tree = F)
+
+## Description des clusters----------
+
+# Quelles sont les variables et modalités qui contribuent le plus aux différents clusters ?
+
+res_cah$desc.var
+
+# Quels sont les individus qui sont proches du centre d’un cluster et loin du centre des autres clusters ?
+
+res_cah$desc.ind
+
+# Fréquence par clusters
+
+freq(res_cah$data.clust$clust, digits = 0)
+
+```
+
+## Conclusion 
+
+Si les secteurs fermés de l'enseignement supérieur ont réussi à maintenir l'homogénéité relative de leur population étudiante. Assurant de ce fait les conditions d'adéquation entre les dispositions de leurs étudiants et les exigences de leurs formations. L'EHESS, bien que jouissant d'un statut de « grand établissement », qui lui donne le droit de réaliser une sélection à l'entrée de ses formations masterantes, par le simple fait d'héberger des filières d'études connues pour être moins sélectives socialement et scolairement, accueille des populations ayant plus de chances d'entrer en contradiction avec les logiques de la "formation à la recherche par la recherche" telle que dispensée à l'école. Explication de l'échec scolaire anormalement élevé au sein de l'école? 
+
+## Sources
+
+La première source utilisée dans cette étude provient d'un questionnaire que j'ai soumis par courrier électronique en décembre 2021 aux étudiants inscrits en première année du master sociologie de l'EHESS au cours de l'année universitaire 2020-2021 (47 individus). En définitive, l'échantillon réuni par l'enquête regroupait 44 individus (taux de réponse de 94%). Le questionnaire commence par une partie destinée à identifier l'individu (niveau, âge, sexe). Il aborde ensuite les thèmes suivants : parcours scolaire de l'étudiant, travail à côté, parcours scolaire et professionnel du père, parcours scolaire et professionnel de la mère, tuteur. 
+L'étude mobilise par ailleurs les résultats d'une enquête menée par Florian Bertrand et Ludovic Gaussot (2021) à partir d'un échantillon de l'enquête Génération 2010 réalisée par le CEREQ. L'enquête Génération est un dispositif  permettant d'étudier l'accès à l'emploi des jeunes à l'issue de leur formation initiale. Tous les trois ans, une nouvelle enquête est réalisée auprès de jeunes qui ont en commun d'être sortis du système éducatif la même année, quel que soit le niveau ou le domaine de formation atteint. Ces enquêtes permettent de reconstituer les parcours des jeunes au cours de leurs trois premières années de vie active et d'analyser ces parcours au regard notamment de la trajectoire scolaire et des diplômes obtenus. En définitive, l'échantillon réuni par l'enquête regroupait 33 547 individus. Grâce à une variable intitulée « Code de la spécialité (NSF) de la classe de sortie » Florian Bertrand et Ludovic Gaussot ont pu distinguer les diplômés de sociologie (tous niveaux confondus) au sein de l'échantillon Génération 2010. À partir de la NSF, ils ont répertorié 257 étudiants sortis des études après avoir effectué une année universitaire rattachée à un cursus de sociologie. Pour respecter les critères de sélection de leurs participants ils ont supprimé les données des diplômés de licence et de doctorat pour retenir uniquement celles des certifiés du niveau master (65). Les résultats obtenus sont à prendre avec des précautions au vu de la distance temporelle qui sépare la production des deux bases de données (2010-2022). 
+
+## Définitions
+
+**Grand établissement** : en France, « grand établissement » est un statut juridique de certains établissements nationaux d’enseignement supérieur et de recherche jouissant de la personnalité morale et de l’autonomie pédagogique et scientifique, administrative et financière. La qualification de grand établissement peut être reconnue, soit à des établissements de fondation ancienne et présentant des spécificités liées à leur histoire, soit à des établissements dont l'offre de formation ne comporte pas la délivrance de diplômes pour les trois cycles de l'enseignement supérieur.
+
+**Grande école** : en France, une grande école est définie par le ministère de l'Éducation nationale comme étant un « établissement d’enseignement supérieur sous tutelle d'un ministère qui recrute ses élèves par concours et assure des formations de haut niveau ». 
+
+**Masters 1 et 2** : au cours des années 2000, les masters 1 ont progressivement remplacé les maitrises et les masters 2, les diplômes d'études approfondies (DEA) et les diplômes d'études supérieures spécialisées (DESS) à la suite de la réforme dite "LMD", mise en oeuvre dans le cadre européen. 
+
+**Origine sociale** : l'origine sociale de l'étudiant fait référence à la profession ou catégorie socioprofessionnelle (PCS) du père. 
+
+**En retard** : on considère qu'un étudiant présente un retard scolaire lorsqu'il a au moins une année de retard par rapport à un cursus normal, c'est-à-dire une scolarité sans interruption ni redoublement. Autrement dit, les étudiants en retard en M2 sont ceux qui ont 25 ans ou plus au 1er janvier de l'année scolaire considérée. 
+
+## Bibliographie
+
+- Beaud S., "La sociologie française au milieu du gué", SociologieS, janvier 2012. 
+- Bertrand F., Gaussot L., "Enquête sur le devenir de masterants de sociologie. Une mise en perspective de l'origine et des destinées sociales au prisme de la professionnalisation de la discipline", Socio-logos, vol. 15, 2021. 
+- Blanchard M., Chauvel S., Harari-Kermadec., "La concurrence par la sélectivité entre masters franciliens", L'année sociologique, vol. 70, 2020. 
+- Bodin R., Orange S., "La barrière ne fera pas le niveau. La sélection à l'université : une fausse solution à un problème mal posé", Actes de la recherche en sciences sociales, vol. 199, 2013.
+- Chenu A., "Une institution sans intention. La sociologie en France depuis l'après-guerre", Actes de la recherche en sciences sociales, vol. 141, 2002. 
+- Convert B., "Des hiérarchies maintenues. Espace des disciplines, morphologie de l'offre scolaire et choix d'orientation en France, 1987-2001", Actes de la recherche en sciences sociales, vol. 149, 2003.
+- Institut des Politiques Publiques, "Quelle démocratisation des grandes écoles depuis le milieu des années 2000 ?", Rapport IPP N°30, janvier 2021. 
